@@ -21,6 +21,8 @@ import { Route as LayoutUrlsImport } from './routes/_layout/urls'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
+import { Route as LayoutUrlsIndexImport } from './routes/_layout/urls/index'
+import { Route as LayoutUrlsIdImport } from './routes/_layout/urls/$id'
 
 // Create/Update Routes
 
@@ -74,6 +76,16 @@ const LayoutAdminRoute = LayoutAdminImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutUrlsIndexRoute = LayoutUrlsIndexImport.update({
+  path: '/',
+  getParentRoute: () => LayoutUrlsRoute,
+} as any)
+
+const LayoutUrlsIdRoute = LayoutUrlsIdImport.update({
+  path: '/$id',
+  getParentRoute: () => LayoutUrlsRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -118,6 +130,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/urls/$id': {
+      preLoaderRoute: typeof LayoutUrlsIdImport
+      parentRoute: typeof LayoutUrlsImport
+    }
+    '/_layout/urls/': {
+      preLoaderRoute: typeof LayoutUrlsIndexImport
+      parentRoute: typeof LayoutUrlsImport
+    }
   }
 }
 
@@ -128,7 +148,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutAdminRoute,
     LayoutItemsRoute,
     LayoutSettingsRoute,
-    LayoutUrlsRoute,
+    LayoutUrlsRoute.addChildren([LayoutUrlsIdRoute, LayoutUrlsIndexRoute]),
     LayoutIndexRoute,
   ]),
   LoginRoute,

@@ -1,5 +1,6 @@
 import React from "react"
 import { Box, Button, Table } from "@chakra-ui/react"
+import { Link } from "@tanstack/react-router"
 
 export interface Url {
   id: number
@@ -32,6 +33,16 @@ export function UrlList({ urls, onStart, onStop, onDelete, onReanalyze }: UrlLis
               <Table.Cell>{url.url}</Table.Cell>
               <Table.Cell>{url.status}</Table.Cell>
               <Table.Cell>
+                <Link to={`/urls/${url.id}`} style={{ textDecoration: "none" }}>
+                  <Button
+                    size="sm"
+                    mr={2}
+                    colorScheme="teal"
+                    variant="outline"
+                  >
+                    View Details
+                  </Button>
+                </Link>
                 <Button size="sm" mr={2} onClick={() => onStart(url.id)}>
                   Start
                 </Button>
