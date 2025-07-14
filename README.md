@@ -61,7 +61,7 @@ This app allows users to:
 
 Below are some screenshots of the application in action:
 
-| Dashboard Overview | URL Submission | URL Details | Broken Links Table | Responsive Mobile View |
+| Dashboard Overview | URL Submission | URL Details | Broken Links Table | Login Page|
 |:-----------------:|:--------------:|:-----------:|:------------------:|:---------------------:|
 | ![Dashboard](image/image01.png) | ![Submit URL](image/image02.png) | ![Details](image/image03.png) | ![Filters ](image/image04.png) | ![Login](image/image05.png) |
 
