@@ -222,6 +222,10 @@ export type UrlsBulkDeleteUrlsResponse = ({
     [key: string]: unknown;
 });
 
+export type UrlsUrlStatsResponse = ({
+    [key: string]: unknown;
+});
+
 export type UrlsGetUrlAnalysisData = {
     id: number;
 };

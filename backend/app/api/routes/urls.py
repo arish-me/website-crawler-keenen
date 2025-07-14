@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Path, Body, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, Path, Body, BackgroundTasks, Depends
 from sqlmodel import select, func
 
 from app.api.deps import CurrentUser, SessionDep
@@ -54,6 +54,14 @@ def list_urls(
     statement = statement.offset(skip).limit(limit)
     urls = session.exec(statement).all()
     return urls
+
+@router.get("/stats", response_model=dict)
+def url_stats(session: SessionDep, current_user: CurrentUser):
+    statement = select(CrawledURL.status, func.count()).where(CrawledURL.user_id == current_user.id).group_by(CrawledURL.status)
+    results = session.exec(statement).all()
+    by_status = {status: count for status, count in results}
+    total = sum(by_status.values())
+    return {"total": total, "by_status": by_status}
 
 @router.get("/{id}", response_model=URLAnalysis)
 def get_url_analysis(
