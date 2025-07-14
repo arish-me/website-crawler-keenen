@@ -9,6 +9,10 @@ import jwt
 from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
 
+import httpx
+from bs4 import BeautifulSoup, Doctype
+from urllib.parse import urlparse, urljoin
+
 from app.core import security
 from app.core.config import settings
 
@@ -121,3 +125,77 @@ def verify_password_reset_token(token: str) -> str | None:
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None
+
+
+def analyze_url(url: str):
+    result = {
+        "html_version": None,
+        "title": None,
+        "h1_count": 0,
+        "h2_count": 0,
+        "h3_count": 0,
+        "h4_count": 0,
+        "h5_count": 0,
+        "h6_count": 0,
+        "internal_links_count": 0,
+        "external_links_count": 0,
+        "inaccessible_links": [],
+        "has_login_form": False,
+    }
+    try:
+        resp = httpx.get(url, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "lxml")
+
+        # HTML version
+        doctype = next((item for item in soup.contents if isinstance(item, Doctype)), None)
+        if doctype:
+            result["html_version"] = str(doctype)
+        else:
+            result["html_version"] = "Unknown"
+
+        # Title
+        result["title"] = soup.title.string if soup.title else None
+
+        # Heading counts
+        for i in range(1, 7):
+            result[f"h{i}_count"] = len(soup.find_all(f"h{i}"))
+
+        # Links
+        domain = urlparse(url).netloc
+        links = soup.find_all("a", href=True)
+        for link in links:
+            href = link["href"]
+            abs_url = urljoin(url, href)
+            if urlparse(abs_url).netloc == domain:
+                result["internal_links_count"] += 1
+            else:
+                result["external_links_count"] += 1
+
+        # Inaccessible links
+        for link in links:
+            href = link["href"]
+            abs_url = urljoin(url, href)
+            try:
+                link_resp = httpx.head(abs_url, timeout=5, follow_redirects=True)
+                if link_resp.status_code >= 400:
+                    result["inaccessible_links"].append({
+                        "link_url": abs_url,
+                        "status_code": link_resp.status_code
+                    })
+            except Exception:
+                result["inaccessible_links"].append({
+                    "link_url": abs_url,
+                    "status_code": None
+                })
+
+        # Login form
+        forms = soup.find_all("form")
+        for form in forms:
+            if form.find("input", {"type": "password"}):
+                result["has_login_form"] = True
+                break
+
+    except Exception as e:
+        result["error"] = str(e)
+    return result

@@ -1,6 +1,9 @@
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
+from datetime import datetime
+from typing import Optional
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
@@ -88,3 +91,37 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+class CrawledURL(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    url: str = Field(max_length=2048)
+    status: str = Field(default="queued", max_length=20)  # queued, running, done, error
+    user_id: int = Field(foreign_key="user.id", nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    analysis: Optional["URLAnalysis"] = Relationship(back_populates="crawled_url")
+
+class URLAnalysis(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    crawled_url_id: int = Field(foreign_key="crawledurl.id", nullable=False)
+    html_version: Optional[str] = None
+    title: Optional[str] = None
+    h1_count: int = 0
+    h2_count: int = 0
+    h3_count: int = 0
+    h4_count: int = 0
+    h5_count: int = 0
+    h6_count: int = 0
+    internal_links_count: int = 0
+    external_links_count: int = 0
+    inaccessible_links_count: int = 0
+    has_login_form: bool = False
+    broken_links: list["BrokenLink"] = Relationship(back_populates="analysis")
+    crawled_url: CrawledURL = Relationship(back_populates="analysis")
+
+class BrokenLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    analysis_id: int = Field(foreign_key="urlanalysis.id", nullable=False)
+    link_url: str = Field(max_length=2048)
+    status_code: int
+    analysis: URLAnalysis = Relationship(back_populates="broken_links")
