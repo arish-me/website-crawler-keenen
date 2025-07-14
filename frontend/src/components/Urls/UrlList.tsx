@@ -1,6 +1,9 @@
 import React from "react"
-import { Box, Button, Table } from "@chakra-ui/react"
+import { Box, Button, Table, Group } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
+import { FiEye, FiPlay, FiStopCircle, FiTrash2, FiRefreshCw } from "react-icons/fi"
+import { Tooltip } from "@/components/ui/tooltip"
+import { IconButton } from "@chakra-ui/react"
 
 export interface Url {
   id: number
@@ -33,28 +36,78 @@ export function UrlList({ urls, onStart, onStop, onDelete, onReanalyze }: UrlLis
               <Table.Cell>{url.url}</Table.Cell>
               <Table.Cell>{url.status}</Table.Cell>
               <Table.Cell>
-                <Link to={`/urls/${url.id}`} style={{ textDecoration: "none" }}>
-                  <Button
+                 <Group>
+                 <Tooltip content="View Details">
+                  <Link to={`/urls/${url.id}`} style={{ textDecoration: "none" }}>
+                  <IconButton
                     size="sm"
-                    mr={2}
+                    mr={1}
                     colorScheme="teal"
                     variant="outline"
-                  >
-                    View Details
-                  </Button>
-                </Link>
-                <Button size="sm" mr={2} onClick={() => onStart(url.id)}>
-                  Start
-                </Button>
-                <Button size="sm" mr={2} onClick={() => onStop(url.id)}>
-                  Stop
-                </Button>
-                <Button size="sm" mr={2} colorScheme="red" onClick={() => onDelete(url.id)}>
-                  Delete
-                </Button>
-                <Button size="sm" onClick={() => onReanalyze(url.id)}>
-                  Reanalyze
-                </Button>
+                    aria-label="View Details"
+                    aria-label="view_details">
+                    <FiEye />
+                  </IconButton>
+                  </Link>
+                </Tooltip>
+
+                <Tooltip content="Start">
+                 <IconButton
+                    size="sm"
+                    mr={1}
+                    colorScheme="teal"
+                    variant="outline"
+                    aria-label="View Details"
+                    onClick={() => onStart(url.id)}
+                    aria-label="start">
+                    <FiPlay />
+                  </IconButton>
+                </Tooltip>
+
+                 <Tooltip content="Stop">
+                 <IconButton
+                    size="sm"
+                    mr={1}
+                    colorScheme="teal"
+                    variant="outline"
+                    aria-label="Stop"
+                    onClick={() => onStop(url.id)}
+                    aria-label="Stop">
+                    <FiStopCircle />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip content="Delete">
+                 <IconButton
+                    size="sm"
+                    mr={1}
+                    colorScheme="teal"
+                    variant="outline"
+                    aria-label="Delete"
+                    onClick={() => onDelete(url.id)}
+                    aria-label="Delete">
+                    <FiTrash2 />
+                  </IconButton>
+                </Tooltip>
+
+                   <Tooltip content="Reanalyze">
+                 <IconButton
+                    size="sm"
+                    mr={1}
+                    colorScheme="teal"
+                    variant="outline"
+                    aria-label="Reanalyze"
+                    onClick={() => onReanalyze(url.id)}
+                    aria-label="Reanalyze">
+                    <FiRefreshCw />
+                  </IconButton>
+                </Tooltip>
+                </Group>
+
+
+
+
+
               </Table.Cell>
             </Table.Row>
           ))}
@@ -62,4 +115,4 @@ export function UrlList({ urls, onStart, onStop, onDelete, onReanalyze }: UrlLis
       </Table.Root>
     </Box>
   )
-} 
+}
