@@ -262,10 +262,14 @@ export class UrlsService {
     
     /**
      * List Urls
-     * List URLs for the current user (paginated).
+     * List URLs for the current user (paginated, sortable, filterable, searchable).
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
+     * @param data.sortBy
+     * @param data.sortOrder
+     * @param data.status
+     * @param data.search
      * @returns CrawledURL Successful Response
      * @throws ApiError
      */
@@ -275,7 +279,11 @@ export class UrlsService {
             url: '/api/v1/urls/',
             query: {
                 skip: data.skip,
-                limit: data.limit
+                limit: data.limit,
+                sort_by: data.sortBy,
+                sort_order: data.sortOrder,
+                status: data.status,
+                search: data.search
             },
             errors: {
                 422: 'Validation Error'
@@ -326,7 +334,7 @@ export class UrlsService {
     
     /**
      * Start Crawl
-     * Start processing/crawling a URL (set status to 'queued').
+     * Start processing/crawling a URL (set status to 'running' and analyze in background).
      * @param data The data for the request.
      * @param data.id
      * @returns CrawledURL Successful Response

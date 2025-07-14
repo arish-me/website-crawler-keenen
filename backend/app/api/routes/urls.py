@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Path, Body, BackgroundTasks
 from sqlmodel import select, func
@@ -33,17 +33,25 @@ def list_urls(
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = Query(100, le=100),
+    sort_by: str = Query("created_at", regex="^(url|status|created_at)$"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    status: Optional[str] = None,
+    search: Optional[str] = None,
 ) -> Any:
     """
-    List URLs for the current user (paginated).
+    List URLs for the current user (paginated, sortable, filterable, searchable).
     """
-    statement = (
-        select(CrawledURL)
-        .where(CrawledURL.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-        .order_by(CrawledURL.created_at.desc())
-    )
+    statement = select(CrawledURL).where(CrawledURL.user_id == current_user.id)
+    if status:
+        statement = statement.where(CrawledURL.status == status)
+    if search:
+        statement = statement.where(CrawledURL.url.contains(search))
+    # Sorting
+    sort_column = getattr(CrawledURL, sort_by)
+    if sort_order == "desc":
+        sort_column = sort_column.desc()
+    statement = statement.order_by(sort_column)
+    statement = statement.offset(skip).limit(limit)
     urls = session.exec(statement).all()
     return urls
 

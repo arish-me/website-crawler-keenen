@@ -205,7 +205,11 @@ export type UrlsAddUrlResponse = (CrawledURL);
 
 export type UrlsListUrlsData = {
     limit?: number;
+    search?: (string | null);
     skip?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    status?: (string | null);
 };
 
 export type UrlsListUrlsResponse = (Array<CrawledURL>);

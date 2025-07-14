@@ -6,6 +6,9 @@ import { UrlForm, UrlFormValues } from "@/components/Urls/UrlForm"
 import { UrlList } from "@/components/Urls/UrlList"
 import { UrlsService, type CrawledURL } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
+import { useState } from "react"
+import { Input, HStack, Spinner, Text, Button, Portal } from "@chakra-ui/react"
+import { Select, createListCollection } from "@chakra-ui/react"
 
 export const Route = createFileRoute("/_layout/urls/")({
   component: UrlsDashboard,
@@ -15,10 +18,25 @@ function UrlsDashboard() {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
-  // Fetch URLs
+  // New state for controls
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [filterStatus, setFilterStatus] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+
+  // Fetch URLs with new params (only pass supported params)
   const { data: urls = [], isLoading } = useQuery({
-    queryKey: ["urls"],
-    queryFn: () => UrlsService.listUrls(),
+    queryKey: ["urls", { page, pageSize, filterStatus, searchTerm }],
+    queryFn: () =>
+      UrlsService.listUrls({
+        skip: (page - 1) * pageSize,
+        limit: pageSize,
+        status: filterStatus || undefined,
+        search: searchTerm || undefined,
+        // Uncomment below if your OpenAPI client supports these params:
+        // status: filterStatus || undefined,
+        // search: searchTerm || undefined,
+      }),
   })
 
   // Add URL
@@ -63,8 +81,22 @@ function UrlsDashboard() {
   const urlListData = (urls as CrawledURL[]).map((u) => ({
     id: u.id!,
     url: u.url,
-    status: u.status,
+    status: u.status || "",
   }))
+
+  // Pagination helpers
+  const total = (urls as any)?.count || 0
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  const statusOptions = createListCollection({
+    items: [
+      { label: "All", value: "" },
+      { label: "Queued", value: "queued" },
+      { label: "Running", value: "running" },
+      { label: "Done", value: "done" },
+      { label: "Error", value: "error" },
+    ],
+  })
 
   return (
     <Container maxW="4xl" py={8}>
@@ -75,15 +107,61 @@ function UrlsDashboard() {
         <Box>
           <UrlForm onSubmit={handleAddUrl} isLoading={addUrlMutation.isPending} />
         </Box>
-        <Box>
-          <UrlList
-            urls={urlListData}
-            onStart={handleStart}
-            onStop={handleStop}
-            onDelete={handleDelete}
-            onReanalyze={handleReanalyze}
+        {/* Controls */}
+        <HStack mb={4}>
+          <Input
+            placeholder="Search URLs"
+            value={searchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); setPage(1); }}
           />
+          <Select.Root
+            value={filterStatus}
+            onValueChange={item => {
+              const selected = Array.isArray(item) ? item[0]?.value : item?.value ?? "";
+              setFilterStatus(selected);
+              setPage(1);
+            }}
+            collection={statusOptions}
+          >
+            <Select.HiddenSelect />
+            <Select.Trigger>
+              <Select.ValueText placeholder="Filter by status" />
+            </Select.Trigger>
+            <Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {statusOptions.items.map((item) => (
+                    <Select.Item item={item} key={item.value}>
+                      {item.label}
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Portal>
+          </Select.Root>
+        </HStack>
+        <Box>
+          {isLoading ? (
+            <Spinner />
+          ) : (
+            <UrlList
+              urls={urlListData}
+              onStart={handleStart}
+              onStop={handleStop}
+              onDelete={handleDelete}
+              onReanalyze={handleReanalyze}
+            />
+          )}
         </Box>
+        {/* Pagination controls */}
+        <HStack mt={4} justify="flex-end">
+          <Button onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+          <Text>
+            Page {page} of {totalPages}
+          </Text>
+          <Button onClick={() => setPage(page + 1)} disabled={page >= totalPages}>Next</Button>
+        </HStack>
       </VStack>
     </Container>
   )
